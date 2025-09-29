@@ -256,16 +256,3 @@ Para parar:
 ```bash
 docker-compose down
 ```
-
-## 🚀 Deploy
-
-### Backend
-
-1. Configure as variáveis de ambiente de produção
-2. Execute `npm run build`
-3. Execute `npm run start`
-
-### Frontend
-
-1. Execute `npm run build`
-2. Execute `npm run start`
