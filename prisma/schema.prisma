@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+  SELLER
+}
+
+model User {
+  id                String     @id @default(uuid())
+  name              String
+  email             String     @unique
+  password          String
+  role              Role       @default(CUSTOMER)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  deletedAt         DateTime?
+  isActive          Boolean    @default(true)
+  cart              Cart?
+  customerFavorites Favorite[] @relation("CustomerFavorites")
+  customerOrders    Order[]    @relation("CustomerOrders")
+  sellerProducts    Product[]  @relation("SellerProducts")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  price       Decimal  @db.Decimal(10, 2)
+  description String?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sellerId String
+  seller   User   @relation("SellerProducts", fields: [sellerId], references: [id])
+
+  orderItems OrderItem[]
+  favorites  Favorite[]
+  totalSold  Int         @default(0)
+  cartItems  CartItem[]
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  customerId String
+  customer   User     @relation("CustomerFavorites", fields: [customerId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+}
+
+model Cart {
+  id         String     @id @default(uuid())
+  customerId String     @unique
+  customer   User       @relation(fields: [customerId], references: [id])
+  items      CartItem[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([cartId, productId])
+}
+
+model Order {
+  id         String      @id @default(uuid())
+  customerId String
+  customer   User        @relation("CustomerOrders", fields: [customerId], references: [id])
+  items      OrderItem[]
+  total      Decimal     @db.Decimal(10, 2)
+  createdAt  DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String  @id @default(uuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+  price     Decimal @db.Decimal(10, 2)
+}
